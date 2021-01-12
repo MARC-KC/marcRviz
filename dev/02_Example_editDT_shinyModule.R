@@ -1,8 +1,6 @@
-# library(shiny)
-# library(shinyjs)
 
-golem::document_and_reload()
 
+devtools::document()
 
 #Define the UI
 ui <- fluidPage(

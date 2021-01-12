@@ -21,7 +21,7 @@
 #' @examples
 #' \dontrun{
 #'
-#' # See the example file in the repo at /dev/run_mod_editableDataTable.R for an example of how this module works
+#' # See the example file in the repo at /dev/02_Example_editDT_shinyModule.R for an example of how this module works
 #'
 #' }
 #'
