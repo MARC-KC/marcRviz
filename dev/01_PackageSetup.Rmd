@@ -42,9 +42,6 @@ usethis::use_package('renv')
 usethis::use_package('gitcreds')
 usethis::use_dev_package('marcR', remote = 'github::MARC-KC/marcR')
 usethis::use_pipe()
-usethis::use_package('here', type = 'Suggests')#for data-raw
-usethis::use_package('readr', type = 'Suggests')#for data-raw
-usethis::use_package('readxl', type = 'Suggests')#for data-raw
 ```
 
 
