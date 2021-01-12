@@ -12,17 +12,8 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ## Install Starting packages
 ```{r}
 renv::install('usethis')
-renv::install('gitcreds')
 ```
 
-
-## GITHUB_PAT
-Make sure PAT is accessible in the package. Run `usethis::edit_r_profile('project')` to open up the project R profile and then add the following line so that the PAT is accessible to {remotes} and {renv} as a environmental variable (GITHUB_PAT). 
-```{r}
-#make sure to leave a blank line at the end of the file when you save it
-Sys.setenv('GITHUB_PAT' = gitcreds::gitcreds_get()[['password']])
-
-```
 
 
 ## Setup ROxygen
@@ -39,7 +30,6 @@ devtools::document()
 Adds the relevant lines to the package DESCTIPTION file:
 ```{r}
 usethis::use_package('renv')
-usethis::use_package('gitcreds')
 usethis::use_package('shiny')
 usethis::use_package('shinyjs')
 usethis::use_package('glue')

@@ -13,7 +13,6 @@ RoxygenNote: 7.1.1
 Imports: 
     shiny,
     renv,
-    gitcreds,
     shinyjs,
     glue,
     purrr,
