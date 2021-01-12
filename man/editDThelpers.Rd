@@ -29,7 +29,7 @@ editDT_rebaseModifyPoint(fullData, modifyPlaceID, indexStart = 0)
 list.}
 
 \item{modifyPlaceID}{The id for the current place in the modify timeline
-being tracked using the modifyID column of fullData. This is an integer
+being tracked using the editDT_modifyID column of fullData. This is an integer
 value from 0 to infinity (i.e. zero indexed). Default 0 used for
 initializing a dataset for use in the module.}
 
@@ -76,10 +76,11 @@ Functions that can be used inside or outside the module to add,
   \item{editDT_prepareNewData}{
    \itemize{
       \item Prepares data for input into module
-      by adding the columns: 'uuid', 'deleteState', 'editState',
-      'newRecord', 'rowID', 'modifyID'. Can be used to initialize a dataset
-      for the module or prepare a new record to be added to an already
-      initialized dataset for the module.
+      by adding the columns: 'editDT_uuid', 'editDT_deleteState',
+      'editDT_editState', 'editDT_newRecord', 'editDT_rowID',
+      'editDT_modifyID'. Can be used to initialize a dataset for the module
+      or prepare a new record to be added to an already initialized dataset
+      for the module.
       \item For use outside the module.
       \item The argument newData and modifyPlaceID are used to initialize
       the input to the main 'tableFull' reactive value.
@@ -91,9 +92,9 @@ Functions that can be used inside or outside the module to add,
   \item{editDT_rebaseModifyPoint}{
     \itemize{
       \item Determines where you are in the modify timeline.If your
-      modifyPlaceID is not equal to \code{max(fullData[['modifyID']])} it
+      modifyPlaceID is not equal to \code{max(fullData[['editDT_modifyID']])} it
       will rebase the fullData. This involves removing all records that have
-      a modifyID larger the modifyPlaceID and redefining the modifyID
+      a editDT_modifyID larger the modifyPlaceID and redefining the editDT_modifyID
       timeline to rebase to 0.
       \item WARNING: This is a destructive action and the module is not
       equipped to undo this modification.

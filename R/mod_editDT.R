@@ -172,10 +172,10 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 
       #TRUE/FALSE on if redo button should be available
       redoEnabled <- reactive({
-        if (is.null(input[['isInEditing']]) | length(toReturn[['tableFull']][['modifyID']]) == 0) {
+        if (is.null(input[['isInEditing']]) | length(toReturn[['tableFull']][['editDT_modifyID']]) == 0) {
           FALSE
         } else {
-          !is.null(toReturn[['tableFull']]) & max(toReturn[['tableFull']][['modifyID']]) > toReturn[['modifyPlaceID']] & !input[['isInEditing']]
+          !is.null(toReturn[['tableFull']]) & max(toReturn[['tableFull']][['editDT_modifyID']]) > toReturn[['modifyPlaceID']] & !input[['isInEditing']]
         }
       })
 
@@ -237,7 +237,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
       }
 
 
-      colToDisplay <- c("Modify", "rowID", colToDisplay)
+      colToDisplay <- c("Modify", "editDT_rowID", colToDisplay)
 
 
       #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -514,7 +514,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
           toReturn[['modifyPlaceID']] <- temp[['modifyPlaceID']] + 1
 
           #modify newData
-          newData <- newData %>% dplyr::mutate(editState = TRUE, modifyID = toReturn[['modifyPlaceID']])
+          newData <- newData %>% dplyr::mutate(editDT_editState = TRUE, editDT_modifyID = toReturn[['modifyPlaceID']])
 
           #Update return table
           toReturn[['tableFull']] <- dplyr::bind_rows(temp[['tableFull']], newData)
@@ -614,7 +614,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 #'   \code{editDT_prepareNewData()} call and stored in a \code{reactiveValues()}
 #'   list.
 #' @param modifyPlaceID The id for the current place in the modify timeline
-#'   being tracked using the modifyID column of fullData. This is an integer
+#'   being tracked using the editDT_modifyID column of fullData. This is an integer
 #'   value from 0 to infinity (i.e. zero indexed). Default 0 used for
 #'   initializing a dataset for use in the module.
 #' @param newData A data.frame/tibble that holds a new dataset for being
@@ -652,10 +652,11 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 #'   \item{editDT_prepareNewData}{
 #'    \itemize{
 #'       \item Prepares data for input into module
-#'       by adding the columns: 'uuid', 'deleteState', 'editState',
-#'       'newRecord', 'rowID', 'modifyID'. Can be used to initialize a dataset
-#'       for the module or prepare a new record to be added to an already
-#'       initialized dataset for the module.
+#'       by adding the columns: 'editDT_uuid', 'editDT_deleteState',
+#'       'editDT_editState', 'editDT_newRecord', 'editDT_rowID',
+#'       'editDT_modifyID'. Can be used to initialize a dataset for the module
+#'       or prepare a new record to be added to an already initialized dataset
+#'       for the module.
 #'       \item For use outside the module.
 #'       \item The argument newData and modifyPlaceID are used to initialize
 #'       the input to the main 'tableFull' reactive value.
@@ -667,9 +668,9 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 #'   \item{editDT_rebaseModifyPoint}{
 #'     \itemize{
 #'       \item Determines where you are in the modify timeline.If your
-#'       modifyPlaceID is not equal to \code{max(fullData[['modifyID']])} it
+#'       modifyPlaceID is not equal to \code{max(fullData[['editDT_modifyID']])} it
 #'       will rebase the fullData. This involves removing all records that have
-#'       a modifyID larger the modifyPlaceID and redefining the modifyID
+#'       a editDT_modifyID larger the modifyPlaceID and redefining the editDT_modifyID
 #'       timeline to rebase to 0.
 #'       \item WARNING: This is a destructive action and the module is not
 #'       equipped to undo this modification.
@@ -687,8 +688,8 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 #' @export
 editDT_currentData <- function(fullData, modifyPlaceID) {
   out <- fullData %>%
-    dplyr::filter(modifyID <= modifyPlaceID) %>%
-    marcR::groupby_rank(uuid, rankby = "modifyID", filterIDs = 1)
+    dplyr::filter(editDT_modifyID <= modifyPlaceID) %>%
+    marcR::groupby_rank(editDT_uuid, rankby = "editDT_modifyID", filterIDs = 1)
   return(out)
 }
 
@@ -696,7 +697,7 @@ editDT_currentData <- function(fullData, modifyPlaceID) {
 #' @export
 editDT_displayData <- function(fullData, modifyPlaceID) {
   out <- editDT_currentData(fullData, modifyPlaceID) %>%
-    dplyr::filter(!deleteState)
+    dplyr::filter(!editDT_deleteState)
   return(out)
 }
 
@@ -704,7 +705,7 @@ editDT_displayData <- function(fullData, modifyPlaceID) {
 #' @export
 editDT_deletedData <- function(fullData, modifyPlaceID) {
   out <- editDT_currentData(fullData, modifyPlaceID) %>%
-    dplyr::filter(deleteState)
+    dplyr::filter(editDT_deleteState)
   return(out)
 }
 
@@ -719,18 +720,18 @@ editDT_prepareNewData <- function(newData, modifyPlaceID = 0, fullData = NULL, n
     if (nrow(fullData) == 0) {
       maxRowID <- 0
     } else {
-      maxRowID <- max(fullData[['rowID']])
+      maxRowID <- max(fullData[['editDT_rowID']])
     }
     rowIDs <- seq_along(newData[[1]]) + maxRowID
   }
 
   newData %>%
-    dplyr::mutate(uuid = uuid::UUIDgenerate(n=dplyr::n()),
-                  deleteState = FALSE,
-                  editState = FALSE,
-                  newRecord = newRecord,
-                  rowID = rowIDs,
-                  modifyID = modifyPlaceID) %>%
+    dplyr::mutate(editDT_uuid = uuid::UUIDgenerate(n=dplyr::n()),
+                  editDT_deleteState = FALSE,
+                  editDT_editState = FALSE,
+                  editDT_newRecord = newRecord,
+                  editDT_rowID = rowIDs,
+                  editDT_modifyID = modifyPlaceID) %>%
     dplyr::mutate(dplyr::across(where(is.factor), as.character))
 
 }
@@ -745,7 +746,7 @@ editDT_rebaseModifyPoint <- function(fullData, modifyPlaceID, indexStart = 0) {
   indexCalc <- dplyr::if_else(indexStart == 0, 1, 0)
 
   #if there are no records return the blank table and set modifyPlaceID to 0
-  if (length(fullData[['modifyID']]) == 0) {
+  if (length(fullData[['editDT_modifyID']]) == 0) {
     out <- list("tableFull"  = fullData, "modifyPlaceID" = 0)
   } else {
 
@@ -754,8 +755,8 @@ editDT_rebaseModifyPoint <- function(fullData, modifyPlaceID, indexStart = 0) {
       out <- list("tableFull"  = editDT_displayData(fullData, modifyPlaceID),
                   "modifyPlaceID" = modifyPlaceID)
 
-      # else if there are some records in full dataset and modifyPlaceID < max(modifyID)
-    } else if (modifyPlaceID == max(fullData[['modifyID']])) {
+      # else if there are some records in full dataset and modifyPlaceID < max(editDT_modifyID)
+    } else if (modifyPlaceID == max(fullData[['editDT_modifyID']])) {
       out <- list("tableFull"  = fullData, "modifyPlaceID" = modifyPlaceID)
 
       #else do full rebase
@@ -763,9 +764,9 @@ editDT_rebaseModifyPoint <- function(fullData, modifyPlaceID, indexStart = 0) {
       # outTable <- editDT_displayData(fullData, modifyPlaceID)
       outTable <- editDT_currentData(fullData, modifyPlaceID)
 
-      outTable[['modifyID']] <- dplyr::dense_rank(outTable$modifyID) - indexCalc
+      outTable[['editDT_modifyID']] <- dplyr::dense_rank(outTable$editDT_modifyID) - indexCalc
 
-      outModifyID <- max(outTable$modifyID)
+      outModifyID <- max(outTable$editDT_modifyID)
 
       out <- list("tableFull"  = outTable, "modifyPlaceID" = outModifyID)
     }
@@ -799,8 +800,8 @@ editDT_rebaseModifyPoint <- function(fullData, modifyPlaceID, indexStart = 0) {
 
 deleteRecords <- function(fullData, displayData, deleteRowIDs, modifyPlaceID) {
   deletedRows <- displayData[deleteRowIDs,] %>%
-    dplyr::mutate(deleteState = TRUE,
-                  modifyID = modifyPlaceID)
+    dplyr::mutate(editDT_deleteState = TRUE,
+                  editDT_modifyID = modifyPlaceID)
   out <- dplyr::bind_rows(fullData, deletedRows)
   return(out)
 }
@@ -810,8 +811,8 @@ cleanForDisplay <- function(fullData, modifyPlaceID, id, colToDisplay, colToEdit
   out <- editDT_displayData(fullData, modifyPlaceID) %>%
     addModifyToDF(id = id, colToEditID = colToEditID) %>%
     dplyr::select(dplyr::any_of(colToDisplay)) %>%
-    dplyr::arrange(rowID) %>% dplyr::relocate("rowID", .after = 1) %>% dplyr::rename("RecordID" = "rowID") %>%
-    dplyr::select(-dplyr::any_of(c('uuid', 'deleteState', 'editState', 'newRecord', 'modifyID'))) %>%
+    dplyr::arrange(editDT_rowID) %>% dplyr::relocate("editDT_rowID", .after = 1) %>% dplyr::rename("RecordID" = "editDT_rowID") %>%
+    dplyr::select(-dplyr::any_of(c('editDT_uuid', 'editDT_deleteState', 'editDT_editState', 'editDT_newRecord', 'editDT_modifyID'))) %>%
     dplyr::mutate(dplyr::across(where(lubridate::is.POSIXct), as.character))
   return(out)
 }
