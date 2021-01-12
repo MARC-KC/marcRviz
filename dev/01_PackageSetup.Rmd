@@ -40,6 +40,12 @@ Adds the relevant lines to the package DESCTIPTION file:
 ```{r}
 usethis::use_package('renv')
 usethis::use_package('gitcreds')
+usethis::use_package('shiny')
+usethis::use_package('shinyjs')
+usethis::use_package('glue')
+usethis::use_package('purrr')
+usethis::use_package('DT')
+usethis::use_package('dplyr')
 usethis::use_dev_package('marcR', remote = 'github::MARC-KC/marcR')
 usethis::use_pipe()
 ```

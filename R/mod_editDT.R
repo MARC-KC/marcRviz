@@ -25,14 +25,10 @@
 #'
 #' }
 #'
-#'
-#' #Run the example application
-#' shinyApp(ui, server)
-#'
-#' }
 #' @rdname editDT
 #' @export
 #'
+#' @import shiny
 #' @importFrom shiny NS tagList
 
 # editableDataTable UI Function
