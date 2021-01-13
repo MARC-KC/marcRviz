@@ -445,10 +445,10 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 
 
 
-        oldData <<- editDT_displayData(toReturn[['tableFull']] , toReturn[['modifyPlaceID']])[rowNum,]
+        oldData <- editDT_displayData(toReturn[['tableFull']] , toReturn[['modifyPlaceID']])[rowNum,]
 
 
-        editedData <<- input$editedData
+        editedData <- input$editedData
 
 
 
@@ -491,7 +491,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
           newData[1,names(newData) %in% headings[i]] <- updatedValues[[i]]
         }
 
-        newData <<- newData
+        newData <- newData
 
         print("Old Data")
         print(oldData)
