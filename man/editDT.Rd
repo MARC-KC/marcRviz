@@ -15,7 +15,9 @@ editDT_server(
   colToEdit = NULL,
   colWidth = NULL,
   colSort = NULL,
-  indexStart = 0
+  indexStart = 0,
+  allowDeletes = TRUE,
+  allowEdits = TRUE
 )
 }
 \arguments{
@@ -23,8 +25,8 @@ editDT_server(
 editDT_ui and editDT_server function calls.}
 
 \item{inputTableFull}{Main input table.Must be initialized with
-\code{editDT_prepareNewData()}. Must be passed in a
-\code{reactive()} statement}
+\code{editDT_prepareNewData()}. Must be passed in a \code{reactive()}
+statement}
 
 \item{inputModifyPlaceID}{Modify ID. Initialized at 0. Must be passed in a
 \code{reactive()} statement}
@@ -41,8 +43,11 @@ an edit button is pressed.}
 columns. (Currently Unimplemented)}
 
 \item{indexStart}{Whether the index should start at 0 or 1. If the table
-contains all new data (i.e. all from a form entry in a current session)
-set the index to 1, else set it to 0 (the default)}
+contains all new data (i.e. all from a form entry in a current session) set
+the index to 1, else set it to 0 (the default)}
+
+\item{allowDeletes, allowEdits}{TRUE/FALSE on whether or not to include the
+edit or delete buttons. Both TRUE by default.}
 
 \item{input, output, session}{Internal parameters for {shiny}. These don't have
 to be specified.}

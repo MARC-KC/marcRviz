@@ -99,8 +99,8 @@ editDT_ui <- function(id){
 #' @param input,output,session Internal parameters for {shiny}. These don't have
 #'   to be specified.
 #' @param inputTableFull Main input table.Must be initialized with
-#'   \code{editDT_prepareNewData()}. Must be passed in a
-#'   \code{reactive()} statement
+#'   \code{editDT_prepareNewData()}. Must be passed in a \code{reactive()}
+#'   statement
 #' @param inputModifyPlaceID Modify ID. Initialized at 0. Must be passed in a
 #'   \code{reactive()} statement
 #' @param colToDisplay Character vector of column names to display in the main
@@ -111,11 +111,13 @@ editDT_ui <- function(id){
 #' @param colSort Named logical vector for whether sorting is enabled on a
 #'   columns. (Currently Unimplemented)
 #' @param indexStart Whether the index should start at 0 or 1. If the table
-#'   contains all new data (i.e. all from a form entry in a current session)
-#'   set the index to 1, else set it to 0 (the default)
+#'   contains all new data (i.e. all from a form entry in a current session) set
+#'   the index to 1, else set it to 0 (the default)
+#' @param allowDeletes,allowEdits TRUE/FALSE on whether or not to include the
+#'   edit or delete buttons. Both TRUE by default.
 #' @rdname editDT
 #' @export
-editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=NULL, colToEdit=NULL, colWidth=NULL, colSort=NULL, indexStart = 0) {
+editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=NULL, colToEdit=NULL, colWidth=NULL, colSort=NULL, indexStart = 0, allowDeletes = TRUE, allowEdits = TRUE) {
   moduleServer(
     id,
     ## Below is the module function
@@ -259,7 +261,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 
 
         #Update displayTableNames
-        displayTableNames(names(cleanForDisplay(toReturn[['tableFull']], toReturn[['modifyPlaceID']], id, colToDisplay = colToDisplay, colToEditID = editIDs())))
+        displayTableNames(names(cleanForDisplay(toReturn[['tableFull']], toReturn[['modifyPlaceID']], id, colToDisplay = colToDisplay, colToEditID = editIDs(), allowDeletes = allowDeletes)))
 
 
 
@@ -321,9 +323,14 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
       # btn_deleteSelected ####
       #+++++++++++++++++++++++++++++++++++++++++++++
 
+      if (!allowDeletes) {
+        shinyjs::runjs(glue::glue("$('#{id}-btn_deleteSelected').remove()"))
+      }
+
+
       # Disable btn_deleteSelected if no rows are selected and not editing any rows
       observeEvent(deleteSelectedEnabled(), {
-        if(deleteSelectedEnabled()) {
+        if(deleteSelectedEnabled() & allowDeletes) {
           shinyjs::enable('btn_deleteSelected')
         } else {
           shinyjs::disable('btn_deleteSelected')
@@ -558,7 +565,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 
         # Add the delete button column
         DT::datatable(
-          data = cleanForDisplay(toReturn[['tableFull']], toReturn[['modifyPlaceID']], id, colToDisplay = colToDisplay, colToEditID = editIDs()),
+          data = cleanForDisplay(toReturn[['tableFull']], toReturn[['modifyPlaceID']], id, colToDisplay = colToDisplay, colToEditID = editIDs(), allowDeletes = allowDeletes),
           callback = DT::JS(glue::glue("
           var colIDs = [%{%colWidths[['IDs']]%}%];
           var colWidths = [%{%colWidths[['widths']]%}%];
@@ -573,6 +580,8 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 
           });
 
+
+
           ", .open = '%{%', .close = '%}%')),
 
           escape = FALSE, # Need to disable escaping for html as string to work
@@ -582,7 +591,28 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 
             # Disable sorting for the delete column
             columnDefs = list(
-              list(targets = 0, sortable = FALSE))
+              list(targets = 0, sortable = FALSE)),
+
+            # Row Callbacks
+            rowCallback = DT::JS(glue::glue("
+
+           function( row, data, index ) {
+
+              //remove deleteRow Buttons
+              if (%{%tolower(as.character(!allowDeletes))%}%) {
+                $(row).find('button.btn_deleteRow').remove();
+                //disable only the delete buttons in table
+                //$(row).find('button.btn_deleteRow').each(function() {$(this).attr('disabled', 'true');});
+              }
+
+              //remove editRow Buttons
+              if (%{%tolower(as.character(!allowEdits))%}%) {
+                $(row).find('button.btn_editRow').remove();
+                //disable only the edit buttons in table
+                //$(row).find('button.btn_editRow').each(function() {$(this).attr('disabled', 'true');});
+              }
+            }
+            ", .open = '%{%', .close = '%}%'))
           ),
           rownames= FALSE#,
 
@@ -807,9 +837,9 @@ deleteRecords <- function(fullData, displayData, deleteRowIDs, modifyPlaceID) {
 }
 
 
-cleanForDisplay <- function(fullData, modifyPlaceID, id, colToDisplay, colToEditID) {
+cleanForDisplay <- function(fullData, modifyPlaceID, id, colToDisplay, colToEditID, allowDeletes) {
   out <- editDT_displayData(fullData, modifyPlaceID) %>%
-    addModifyToDF(id = id, colToEditID = colToEditID) %>%
+    addModifyToDF(id = id, colToEditID = colToEditID, allowDeletes = allowDeletes) %>%
     dplyr::select(dplyr::any_of(colToDisplay)) %>%
     dplyr::arrange(editDT_rowID) %>% dplyr::relocate("editDT_rowID", .after = 1) %>% dplyr::rename("RecordID" = "editDT_rowID") %>%
     dplyr::select(-dplyr::any_of(c('editDT_uuid', 'editDT_deleteState', 'editDT_editState', 'editDT_newRecord', 'editDT_modifyID'))) %>%
@@ -828,7 +858,7 @@ cleanForDisplay <- function(fullData, modifyPlaceID, id, colToDisplay, colToEdit
 #'
 #' @return A data.frame with the new 'Modify' column for use within DT
 #' @noRd
-addModifyToDF <- function(df, id, colToEditID) {
+addModifyToDF <- function(df, id, colToEditID, allowDeletes) {
 
     # function to create one action button as string
   f <- function(i) {
@@ -911,8 +941,14 @@ if ($("#%{%editInputID%}%")[0].matches(".btn_editRow_clicked")) {
     $(this).html(txt);
   });
 
-  //enable all buttons in table
-  $("div#%{%id%}%-dt_editableTable button").each(function() {$(this).removeAttr("disabled");});
+  var allowDeletes = %{%tolower(as.character(allowDeletes))%}%
+  if (allowDeletes) {
+    //enable all buttons in table
+    $("div#%{%id%}%-dt_editableTable button").each(function() {$(this).removeAttr("disabled");});
+  } else {
+    //enable only the edit buttons in table
+    $("div#%{%id%}%-dt_editableTable button.btn_editRow").each(function() {$(this).removeAttr("disabled");});
+  }
 
 }
 
