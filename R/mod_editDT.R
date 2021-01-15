@@ -878,9 +878,6 @@ if ($("#%{%editInputID%}%")[0].matches(".btn_editRow_clicked")) {
   //disable all buttons in table
   $("div#%{%id%}%-dt_editableTable button").each(function() {$(this).attr("disabled", "true");});
 
-  //disable paginate links (seems this isnt possible)
-  //$("div#%{%id%}%-dt_editableTable div.dataTables_paginate a").each(function() {$(this).attr("disabled", "true");});
-
   //enable single edit button
   $("div#%{%id%}%-dt_editableTable button#%{%editInputID%}%").each(function() {$(this).removeAttr("disabled");});
 
@@ -916,10 +913,6 @@ if ($("#%{%editInputID%}%")[0].matches(".btn_editRow_clicked")) {
 
   //enable all buttons in table
   $("div#%{%id%}%-dt_editableTable button").each(function() {$(this).removeAttr("disabled");});
-
-  //enable all buttons in paginate (seemse this isnt possible)
-  //$("div#%{%id%}%-dt_editableTable div.dataTables_paginate a").each(function() {$(this).removeAttr("disabled");});
-
 
 }
 
