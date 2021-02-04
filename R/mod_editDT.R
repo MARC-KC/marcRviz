@@ -65,6 +65,7 @@ editDT_ui <- function(id){
 
   tagsOut <- tagList(
     shinyjs::useShinyjs(),
+    div(tags$head(marcRviz::editDT_js())),
     div(tags$head(tags$script(HTML(jsInit)))),
     div(tags$head(tags$script(HTML(jsCustom)))),
     shinyjs::inlineCSS(glue::glue("
@@ -260,11 +261,8 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
         toReturn[['modifyPlaceID']] <- inputModifyPlaceID()
 
 
-        #Update displayTableNames
-        displayTableNames(names(cleanForDisplay(toReturn[['tableFull']], toReturn[['modifyPlaceID']], id, colToDisplay = colToDisplay, colToEditID = editIDs(), allowDeletes = allowDeletes)))
-
-
-
+      #Update displayTableNames
+      displayTableNames(getDisplayNames(toReturn[['tableFull']], colToDisplay = colToDisplay))
       })
       # +++++++++++++++++++++++++++++++++++++++++++++
 
@@ -441,7 +439,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
       #+++++++++++++++++++++++++++++++++++++++++++++
       # Rowwise btn 'id'_editPressed ####
       #+++++++++++++++++++++++++++++++++++++++++++++
-            observeEvent(input[['editedData']], {
+      observeEvent(input[['editedData']], {
 
         #Finds editing row number
         rowNum <- parseDeleteEvent(input[['editPressed']])
@@ -547,10 +545,10 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 
 
 
-      # #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      # # Render Outputs ####
-      # #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      #
+      #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      # Render Outputs ####
+      #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
       # #Render Count of Deleted Text
       # output[['txt_deletedCount']] <- renderText({
       #   if (deletedTableNumRows() == 0) {
@@ -559,43 +557,29 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
       #     paste0(deletedTableNumRows(), " rows deleted.")
       #   }
       # })
-      #
+
+
+
+
       #Render Table
-      output[['dt_editableTable']] <- DT::renderDataTable(
+      output[['dt_editableTable']] <- DT::renderDataTable({
+        # outDF <- toReturn[['tableFull']]
+        outDF <- cleanForDisplay(toReturn[['tableFull']], toReturn[['modifyPlaceID']], id, colToDisplay = colToDisplay, colToEditID = editIDs(), allowDeletes = allowDeletes)
+        callbackJS <- glue::glue("
+            var colIDs = [%{%colWidths[['IDs']]%}%];
+            var colWidths = [%{%colWidths[['widths']]%}%];
+            //console.log(colIDs);
+            //console.log(colWidths);
+            var colWidthHeadings = $('div#%{%id%}%-dt_editableTable thead th').filter(function(index) {return colIDs.indexOf(index) > -1;});
+            //console.log(colWidthHeadings);
+            $.each(colWidthHeadings, function(index, el) {
+              //console.log($(this));
+              $(this).css('width', colWidths[index]).css('max-width', colWidths[index]).css('min-width', colWidths[index]);
+              //console.log($(this));
 
-        # Add the delete button column
-        DT::datatable(
-          data = cleanForDisplay(toReturn[['tableFull']], toReturn[['modifyPlaceID']], id, colToDisplay = colToDisplay, colToEditID = editIDs(), allowDeletes = allowDeletes),
-          callback = DT::JS(glue::glue("
-          var colIDs = [%{%colWidths[['IDs']]%}%];
-          var colWidths = [%{%colWidths[['widths']]%}%];
-          //console.log(colIDs);
-          //console.log(colWidths);
-          var colWidthHeadings = $('div#%{%id%}%-dt_editableTable thead th').filter(function(index) {return colIDs.indexOf(index) > -1;});
-          //console.log(colWidthHeadings);
-          $.each(colWidthHeadings, function(index, el) {
-            //console.log($(this));
-            $(this).css('width', colWidths[index]).css('max-width', colWidths[index]).css('min-width', colWidths[index]);
-            //console.log($(this));
-
-          });
-
-
-
-          ", .open = '%{%', .close = '%}%')),
-
-          escape = FALSE, # Need to disable escaping for html as string to work
-          options = list(
-            # scrollX=TRUE,# scrollCollapse=TRUE,
-            # autoWidth=TRUE,
-
-            # Disable sorting for the delete column
-            columnDefs = list(
-              list(targets = 0, sortable = FALSE)),
-
-            # Row Callbacks
-            rowCallback = DT::JS(glue::glue("
-
+            });
+            ", .open = '%{%', .close = '%}%')
+        rowCallbackJS <- glue::glue("
            function( row, data, index ) {
 
               //remove deleteRow Buttons
@@ -612,12 +596,27 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
                 //$(row).find('button.btn_editRow').each(function() {$(this).attr('disabled', 'true');});
               }
             }
-            ", .open = '%{%', .close = '%}%'))
-          ),
-          rownames= FALSE#,
+            ", .open = '%{%', .close = '%}%')
 
+
+        DT::datatable(data = outDF,
+                      escape = FALSE,
+                      rownames= FALSE,
+                      callback = DT::JS(callbackJS),
+                      options = list(
+                            # scrollX=TRUE,# scrollCollapse=TRUE,
+                            # autoWidth=TRUE,
+
+                            # Disable sorting for the delete column
+                            columnDefs = list(
+                              list(targets = 0, sortable = FALSE)),
+
+                            # Row Callbacks
+                            rowCallback = DT::JS(rowCallbackJS)
+                          )
         )
-      )
+
+      })
       #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -827,6 +826,14 @@ editDT_rebaseModifyPoint <- function(fullData, modifyPlaceID, indexStart = 0) {
 # Internal Module Helper Functions ####
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+editDT_js <- function() {
+  includeScript(path = system.file("mod_editDT.js", package = "marcRviz"))
+}
+
+getDisplayNames <- function(tableFull, colToDisplay) {
+  return(c("Modify", "RecordID", names(tableFull)[names(tableFull) %in% colToDisplay]))
+}
+
 
 deleteRecords <- function(fullData, displayData, deleteRowIDs, modifyPlaceID) {
   deletedRows <- displayData[deleteRowIDs,] %>%
@@ -860,13 +867,19 @@ cleanForDisplay <- function(fullData, modifyPlaceID, id, colToDisplay, colToEdit
 #' @noRd
 addModifyToDF <- function(df, id, colToEditID, allowDeletes) {
 
-    # function to create one action button as string
-  f <- function(i) {
+
+  if (nrow(df) == 0) {
+    modifyCol <- character(0)
+  } else {
+
+
+    i = '___i___'
+
     deleteInputID <- paste(id, 'delete', i, sep="_")
     editInputID <- paste(id, 'edit', i, sep="_")
-
-    as.character(
+    modifyButton <- as.character(
       tagList(
+
         #add delete button
         actionButton(
           # The id prefix with index
@@ -876,100 +889,32 @@ addModifyToDF <- function(df, id, colToEditID, allowDeletes) {
           icon = icon('trash'),
           class = "btn_deleteRow",
           # to access Shiny.setInputValue as input[['deletePressed']] inside a module you prefix the module id and a '-' to the value (https://community.rstudio.com/t/shiny-setinputvalue-in-modular-app-with-namespaces/23263)
-          onclick = glue::glue('
-Shiny.setInputValue(\"%{%id%}%-deletePressed\", this.id, {priority: "event"});',
-.open = '%{%', .close = '%}%'
-          )
+          onclick = glue::glue('Shiny.setInputValue(\"%{%id%}%-deletePressed\", this.id, {priority: "event"});',.open = '%{%', .close = '%}%')
         ),
-#add edit button (lots of onclick javascript here)
-actionButton(
-  # The id prefix with index
-  inputId = editInputID,
-  class = id,
-  label = NULL,
-  icon = icon('edit'),
-  class = "btn_editRow",
-  # to access Shiny.setInputValue as input[['deletePressed']] inside a module you prefix the module id and a '-' to the value (https://community.rstudio.com/t/shiny-setinputvalue-in-modular-app-with-namespaces/23263)
-  onclick = glue::glue('
-//set up input value for when a rowise edit button is pressed
-Shiny.setInputValue(\"%{%id%}%-editPressed\", this.id, {priority: "event"});
 
-//toggle formatting class of button
-document.getElementById("%{%editInputID%}%").classList.toggle("btn_editRow");
-document.getElementById("%{%editInputID%}%").classList.toggle("btn_editRow_clicked");
-
-//Is editing?
-Shiny.onInputChange("%{%id%}%-isInEditing", $("#%{%editInputID%}%")[0].matches(".btn_editRow_clicked"));
-
-
-//if an edit button is clicked
-if ($("#%{%editInputID%}%")[0].matches(".btn_editRow_clicked")) {
-
-  //disable all buttons in table
-  $("div#%{%id%}%-dt_editableTable button").each(function() {$(this).attr("disabled", "true");});
-
-  //enable single edit button
-  $("div#%{%id%}%-dt_editableTable button#%{%editInputID%}%").each(function() {$(this).removeAttr("disabled");});
-
-  //start editing
-  var editIndicies = [%{%colToEditID%}%];
-  //var headings = $("div#%{%id%}%-dt_editableTable thead th").filter(function(index) {return editIndicies.indexOf(index) > -1;});
-  var trObjs = $("div#%{%id%}%-dt_editableTable button#%{%editInputID%}%").closest("tr").children("td").filter(function(index) {return editIndicies.indexOf(index) > -1;});
-  //console.log(trObjs);
-  //Add input fields (could program type here too)
-  $.each(trObjs, function(i, el) {
-    var txt = $(this).text();
-    //had to add some special escaping here on the R side to escape the single quotes and slashes
-    $(this).html("").append("<input type=\'text\' value=\\""+txt+"\\">");
-  });
-
-} else {
-
-  //save data for use in R
-  var editIndicies = [%{%colToEditID%}%];
-  var headings = $("div#%{%id%}%-dt_editableTable thead th").filter(function(index) {return editIndicies.indexOf(index) > -1;});
-  var trObjs = $("div#%{%id%}%-dt_editableTable button#%{%editInputID%}%").closest("tr").children("td").filter(function(index) {return editIndicies.indexOf(index) > -1;});
-  var headArr = $.makeArray(headings.map(function() { return($(this).text());}));;
-  var inputArr = $.makeArray(trObjs.map(function() { return($(this).find("input").val());}));
-  var editOutput = {headings: headArr,
-                    updatedValues: inputArr};
-  Shiny.onInputChange("%{%id%}%-editedData", editOutput);
-
-  //save data in displayed table and close inputs
-  $.each(trObjs, function(i, el) {
-    var txt = $(this).find("input").val()
-    $(this).html(txt);
-  });
-
-  var allowDeletes = %{%tolower(as.character(allowDeletes))%}%
-  if (allowDeletes) {
-    //enable all buttons in table
-    $("div#%{%id%}%-dt_editableTable button").each(function() {$(this).removeAttr("disabled");});
-  } else {
-    //enable only the edit buttons in table
-    $("div#%{%id%}%-dt_editableTable button.btn_editRow").each(function() {$(this).removeAttr("disabled");});
-  }
-
-}
-
-
-            ', .open = '%{%', .close = '%}%'
-  )
-)
+        #add edit button (lots of onclick javascript here)
+        actionButton(
+          # The id prefix with index
+          inputId = editInputID,
+          class = id,
+          label = NULL,
+          icon = icon('edit'),
+          class = "btn_editRow",
+          onclick = glue::glue('rowiseEditOnclick("{id}", "{i}", [{colToEditID}], {tolower(as.character(allowDeletes))})')
+        )
       )
     )
+
+    modifyCol <- rep(modifyButton, nrow(df))
+    modifyCol <- modifyCol %>% stringr::str_replace_all('___i___', as.character(1:nrow(df)))
+
+
   }
 
-if (nrow(df) == 0) {
-  modifyCol <- character(0)
-} else {
-  modifyCol <- unlist(lapply(seq_len(nrow(df)), f))
-}
 
+  outDF <- cbind(Modify = modifyCol, df)
 
-outDF <- cbind(Modify = modifyCol, df)
-
-return(outDF)
+  return(outDF)
 }
 
 
