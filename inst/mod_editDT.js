@@ -25,9 +25,9 @@ rowiseEditOnclick = function(id, row, editIndicies, allowDeletes) {
         $("div#" + id + "-dt_editableTable button#" + editInputID).each(function() {$(this).removeAttr("disabled");});
 
         //start editing
-        // var editIndicies = [%{%colToEditID%}%];
         var trObjs = $("div#" + id + "-dt_editableTable button#" + editInputID).closest("tr").children("td").filter(function(index) {return editIndicies.indexOf(index) > -1;});
         //console.log(trObjs);
+
         //Add input fields (could program type here too)
         $.each(trObjs, function(i, el) {
             var txt = $(this).text();
@@ -38,13 +38,12 @@ rowiseEditOnclick = function(id, row, editIndicies, allowDeletes) {
     } else {
 
         //save data for use in R
-        // var editIndicies = [%{%colToEditID%}%];
         var headings = $("div#" + id + "-dt_editableTable thead th").filter(function(index) {return editIndicies.indexOf(index) > -1;});
         var trObjs = $("div#" + id + "-dt_editableTable button#" + editInputID).closest("tr").children("td").filter(function(index) {return editIndicies.indexOf(index) > -1;});
         var headArr = $.makeArray(headings.map(function() { return($(this).text());}));;
         var inputArr = $.makeArray(trObjs.map(function() { return($(this).find("input").val());}));
         var editOutput = {headings: headArr, updatedValues: inputArr};
-        console.log(editOutput);
+
         Shiny.onInputChange(id + "-editedData", editOutput);
 
         //save data in displayed table and close inputs
@@ -53,7 +52,6 @@ rowiseEditOnclick = function(id, row, editIndicies, allowDeletes) {
             $(this).html(txt);
         });
 
-        // var allowDeletes = %{%tolower(as.character(allowDeletes))%}%
         if (allowDeletes) {
             //enable all buttons in table
             $("div#" + id + "-dt_editableTable button").each(function() {$(this).removeAttr("disabled");});
@@ -63,4 +61,24 @@ rowiseEditOnclick = function(id, row, editIndicies, allowDeletes) {
         }
 
     }
+}
+
+
+
+getSelectedRecordIDs = function(id, RecordIDname) {
+    console.log(id)
+    console.log(RecordIDname)
+    //Find the correct column with RecordID 
+    var colNames = $('div#' + id + '-dt_editableTable table.dataTable thead th').map(function() {return($(this).text());});
+    // var recordIDIndex = colNames.toArray().indexOf("RecordID");
+    var recordIDIndex = colNames.toArray().indexOf(RecordIDname);
+
+    //Pull the ID's for the selected Rows
+    var selectedIDs = $('div#' + id + '-dt_editableTable table.dataTable tbody tr.selected').map(function() {return($(this).children('td')[recordIDIndex].innerText);}).toArray();
+    selectedIDs = selectedIDs.map( function(x) {return(parseInt(x));});
+    console.log(selectedIDs)
+
+    //Export to a shiny variable
+    Shiny.onInputChange(id + "-JSselectedRows", selectedIDs);
+
 }

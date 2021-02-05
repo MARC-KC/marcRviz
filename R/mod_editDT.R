@@ -187,6 +187,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
       displayTableNames <- reactiveVal('')
       editIDs <- reactiveVal('')
       colWidths <- reactiveValues(IDs = c('0,1'), Widths = c("c('70px', '60px')"))
+      deletedSelectedWasPressed <- reactiveVal(FALSE)
 
       #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -240,7 +241,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
       }
 
 
-      colToDisplay <- c("Modify", "editDT_rowID", colToDisplay)
+      colToDisplay <- c("editDT_modifyCol", "editDT_rowID", colToDisplay)
 
 
       #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -257,12 +258,38 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
       #+++++++++++++++++++++++++++++++++++++++++++++
       #When the input inputTableFull is updated, update the in module variables
       observeEvent(inputTableFull(), {
-        toReturn[['tableFull']] <- inputTableFull()
+
+        if (any(is.na(inputTableFull()[['editDT_modifyCol']]))) {
+
+          tableFullHasModify <- dplyr::filter(inputTableFull(), !is.na(editDT_modifyCol))
+          tableFullAddedModify <- dplyr::filter(inputTableFull(), is.na(editDT_modifyCol))
+
+          tableFullAddedModify <- addModifyToDF(tableFullAddedModify, id = id, colToEditID = editIDs(), allowDeletes = allowDeletes)
+
+          toReturn[['tableFull']] <- dplyr::bind_rows(tableFullHasModify, tableFullAddedModify) %>%
+            dplyr::arrange(editDT_modifyID, editDT_rowID)
+
+        } else {
+
+          toReturn[['tableFull']] <- inputTableFull()
+
+        }
+
+
+        # toReturn[['tableFull']] <- inputTableFull()
         toReturn[['modifyPlaceID']] <- inputModifyPlaceID()
 
+        # tableFull <<- inputTableFull()
 
-      #Update displayTableNames
-      displayTableNames(getDisplayNames(toReturn[['tableFull']], colToDisplay = colToDisplay))
+        #Update displayTableNames
+        displayTableNames(getDisplayNames(toReturn[['tableFull']], colToDisplay = colToDisplay))
+      })
+
+
+      observeEvent(inputTableFull(), {
+
+        toReturn[['tableFull']] <- addModifyToDF(inputTableFull(), id = id, colToEditID = editIDs(), allowDeletes = allowDeletes)
+
       })
       # +++++++++++++++++++++++++++++++++++++++++++++
 
@@ -336,24 +363,46 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
       })
 
 
-      #When the btn_deleteSelected button is pressed
+
+
+
+      #When the btn_deleteSelected button is pressed (works in tandem with observeEvent(input[['JSselectedRows']], {}))
       observeEvent(input[['btn_deleteSelected']], {
 
-        #Get Row ID's of rows that are selected
-        selectedRowIDs <- input[['dt_editableTable_rows_selected']]
+        #Begin delete Selected Process and jump to observe change in JSselectedRows
+        deletedSelectedWasPressed(TRUE)
+        shinyjs::runjs(glue::glue('getSelectedRecordIDs("{id}", "RecordID")'))
 
+      })
 
-        #Check for placement of modifyPlaceID and rebase table if needed
-        temp <- editDT_rebaseModifyPoint(toReturn[['tableFull']], toReturn[['modifyPlaceID']], indexStart = indexStart)
-        toReturn[['tableFull']] <- temp[['tableFull']]
-        toReturn[['modifyPlaceID']] <- temp[['modifyPlaceID']]
+      observeEvent(input[['JSselectedRows']], {
 
-        #Add to modifyID counter
-        toReturn[['modifyPlaceID']] <- toReturn[['modifyPlaceID']] + 1
+        if (deletedSelectedWasPressed()) {
+          print('Deleting Selected Rows')
 
-        #Update return table
-        toReturn[['tableFull']] <- deleteRecords(toReturn[['tableFull']], displayedTable(), deleteRowIDs = selectedRowIDs, toReturn[['modifyPlaceID']])
+          #Reset deleteSelectedWasPressed Trigger
+          deletedSelectedWasPressed(FALSE)
 
+          selectedRowIDs <- input[['JSselectedRows']]
+          print(selectedRowIDs)
+
+          #Check for placement of modifyPlaceID and rebase table if needed
+          temp <- editDT_rebaseModifyPoint(toReturn[['tableFull']], toReturn[['modifyPlaceID']], indexStart = indexStart)
+          toReturn[['tableFull']] <- temp[['tableFull']]
+          toReturn[['modifyPlaceID']] <- temp[['modifyPlaceID']]
+
+          #Add to modifyID counter
+          toReturn[['modifyPlaceID']] <- toReturn[['modifyPlaceID']] + 1
+
+          #Update return table
+          toReturn[['tableFull']] <- deleteRecords(toReturn[['tableFull']], displayedTable(), deleteRowIDs = selectedRowIDs, toReturn[['modifyPlaceID']])
+
+          #reset JSseelctedRows
+          shinyjs::runjs(glue::glue('Shiny.onInputChange("{id}-JSselectedRows", []);)'))
+
+        } else {
+          print('Skip Deleting Selected Rows')
+        }
 
       })
       #+++++++++++++++++++++++++++++++++++++++++++++
@@ -444,15 +493,11 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
         #Finds editing row number
         rowNum <- parseDeleteEvent(input[['editPressed']])
 
-        # if row being edited (check for btn_editRow_clicked)
-        # make copy of row
-        # print(editDT_displayData(toReturn[['tableFull']] , toReturn[['modifyPlaceID']])[rowNum,])
 
+        #make copy of old data
+        oldData <- dplyr::filter(editDT_displayData(toReturn[['tableFull']] , toReturn[['modifyPlaceID']]), editDT_rowID %in% rowNum)
 
-
-        oldData <- editDT_displayData(toReturn[['tableFull']] , toReturn[['modifyPlaceID']])[rowNum,]
-
-
+        #pull edited data for comparison
         editedData <- input$editedData
 
 
@@ -760,7 +805,8 @@ editDT_prepareNewData <- function(newData, modifyPlaceID = 0, fullData = NULL, n
                   editDT_editState = FALSE,
                   editDT_newRecord = newRecord,
                   editDT_rowID = rowIDs,
-                  editDT_modifyID = modifyPlaceID) %>%
+                  editDT_modifyID = modifyPlaceID,
+                  editDT_modifyCol = NA_character_) %>%
     dplyr::mutate(dplyr::across(where(is.factor), as.character))
 
 }
@@ -836,7 +882,8 @@ getDisplayNames <- function(tableFull, colToDisplay) {
 
 
 deleteRecords <- function(fullData, displayData, deleteRowIDs, modifyPlaceID) {
-  deletedRows <- displayData[deleteRowIDs,] %>%
+  # deletedRows <- displayData[deleteRowIDs,] %>%
+  deletedRows <- dplyr::filter(displayData, editDT_rowID %in% deleteRowIDs) %>%
     dplyr::mutate(editDT_deleteState = TRUE,
                   editDT_modifyID = modifyPlaceID)
   out <- dplyr::bind_rows(fullData, deletedRows)
@@ -846,9 +893,10 @@ deleteRecords <- function(fullData, displayData, deleteRowIDs, modifyPlaceID) {
 
 cleanForDisplay <- function(fullData, modifyPlaceID, id, colToDisplay, colToEditID, allowDeletes) {
   out <- editDT_displayData(fullData, modifyPlaceID) %>%
-    addModifyToDF(id = id, colToEditID = colToEditID, allowDeletes = allowDeletes) %>%
+    # addModifyToDF(id = id, colToEditID = colToEditID, allowDeletes = allowDeletes) %>%
     dplyr::select(dplyr::any_of(colToDisplay)) %>%
-    dplyr::arrange(editDT_rowID) %>% dplyr::relocate("editDT_rowID", .after = 1) %>% dplyr::rename("RecordID" = "editDT_rowID") %>%
+    dplyr::arrange(editDT_rowID) %>% dplyr::relocate("editDT_modifyCol", "editDT_rowID", .before = 1) %>%
+    dplyr::rename("Modify" = "editDT_modifyCol", "RecordID" = "editDT_rowID") %>%
     dplyr::select(-dplyr::any_of(c('editDT_uuid', 'editDT_deleteState', 'editDT_editState', 'editDT_newRecord', 'editDT_modifyID'))) %>%
     dplyr::mutate(dplyr::across(where(lubridate::is.POSIXct), as.character))
   return(out)
@@ -862,6 +910,8 @@ cleanForDisplay <- function(fullData, modifyPlaceID, id, colToDisplay, colToEdit
 #' @param df data frame
 #' @param id id prefix to add to each actionButton. The buttons will be id'd as id_INDEX.
 #' @param colToEditID id's of the columns to allow editing
+#' @param allowDeletes TRUE/FALSE on whether or not to include the
+#'   edit or delete buttons. Both TRUE by default.
 #'
 #' @return A data.frame with the new 'Modify' column for use within DT
 #' @noRd
@@ -906,13 +956,13 @@ addModifyToDF <- function(df, id, colToEditID, allowDeletes) {
     )
 
     modifyCol <- rep(modifyButton, nrow(df))
-    modifyCol <- modifyCol %>% stringr::str_replace_all('___i___', as.character(1:nrow(df)))
+    modifyCol <- modifyCol %>% stringr::str_replace_all('___i___', as.character(df[['editDT_rowID']]))
 
 
   }
 
 
-  outDF <- cbind(Modify = modifyCol, df)
+  outDF <- dplyr::mutate(df, editDT_modifyCol = modifyCol)
 
   return(outDF)
 }
@@ -926,7 +976,9 @@ addModifyToDF <- function(df, id, colToEditID, allowDeletes) {
 #' @return INDEX from the id string id_INDEX
 #' @noRd
 parseDeleteEvent <- function(idstr) {
+  print(idstr)
   res <- as.integer(sub(".*_([0-9]+)", "\\1", idstr))
+  print(res)
   if (! is.na(res)) res
 }
 
