@@ -867,6 +867,7 @@ editDT_rebaseModifyPoint <- function(fullData, modifyPlaceID, indexStart = 0) {
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Internal Module Helper Functions ####
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#' @title JavaScript file for editDT {shiny} module
 #' @export
 editDT_js <- function() {
   includeScript(path = system.file("mod_editDT.js", package = "marcRviz"))
