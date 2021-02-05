@@ -276,21 +276,17 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
         }
 
 
-        # toReturn[['tableFull']] <- inputTableFull()
         toReturn[['modifyPlaceID']] <- inputModifyPlaceID()
 
-        # tableFull <<- inputTableFull()
-
-        #Update displayTableNames
-        displayTableNames(getDisplayNames(toReturn[['tableFull']], colToDisplay = colToDisplay))
       })
 
 
       observeEvent(inputTableFull(), {
 
-        toReturn[['tableFull']] <- addModifyToDF(inputTableFull(), id = id, colToEditID = editIDs(), allowDeletes = allowDeletes)
+        #Update displayTableNames
+        displayTableNames(getDisplayNames(inputTableFull(), colToDisplay = colToDisplay))
 
-      })
+      }, priority = 100)
       # +++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -317,7 +313,7 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
           ids <- (which(displayTableNames() %in% colToEdit) - 1)
           editIDs(paste0(ids, collapse = ","))
         }
-      })
+      }, priority = 90)
 
       #+++++++++++++++++++++++++++++++++++++++++++++
 

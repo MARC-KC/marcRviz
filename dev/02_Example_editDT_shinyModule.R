@@ -81,7 +81,7 @@ server <- function(input, output, session) {
     #Initialize appValues
     iris_editDT_appValues <- reactiveValues(
         # tableFull = editDT_prepareNewData(iris, modifyPlaceID = 0),
-        tableFull = editDT_prepareNewData(purrr::map_dfr(1:20, ~tibble::tibble(iris)), modifyPlaceID = 0), #for testing large datesets
+        tableFull = editDT_prepareNewData(purrr::map_dfr(1:500, ~tibble::tibble(iris)), modifyPlaceID = 0), #for testing large datesets
         modifyPlaceID = 0
     )
 
