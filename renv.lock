@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.0.3",
+    "Version": "4.0.4",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -32,10 +32,10 @@
     },
     "KernSmooth": {
       "Package": "KernSmooth",
-      "Version": "2.23-17",
+      "Version": "2.23-18",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "bbff70c8c0357b5b88238c83f680fcd3"
+      "Hash": "9e703ad8bf0e99f3691f05da32dfe68b"
     },
     "MASS": {
       "Package": "MASS",
@@ -51,12 +51,26 @@
       "Repository": "CRAN",
       "Hash": "b203113193e70978a696b2809525649d"
     },
+    "RSelenium": {
+      "Package": "RSelenium",
+      "Version": "1.7.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "74834714fd6df6a30928a368bae20347"
+    },
     "Rcpp": {
       "Package": "Rcpp",
       "Version": "1.0.5",
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "125dc7a0ed375eb68c0ce533b48d291f"
+    },
+    "XML": {
+      "Package": "XML",
+      "Version": "3.99-0.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "408d42d1359f2a84d377c1f7f0568624"
     },
     "askpass": {
       "Package": "askpass",
@@ -79,6 +93,13 @@
       "Repository": "CRAN",
       "Hash": "543776ae6848fde2f48ff3816d0628bc"
     },
+    "binman": {
+      "Package": "binman",
+      "Version": "0.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1b685ef5db3de62eb3870d88280061dc"
+    },
     "bit": {
       "Package": "bit",
       "Version": "4.0.4",
@@ -92,6 +113,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "9fe98599ca456d6552421db0d6772d8f"
+    },
+    "bitops": {
+      "Package": "bitops",
+      "Version": "1.0-6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0b118d5900596bae6c4d4865374536a6"
     },
     "blob": {
       "Package": "blob",
@@ -114,6 +142,13 @@
       "Repository": "CRAN",
       "Hash": "570a24963009b9cce0869a0463c83580"
     },
+    "caTools": {
+      "Package": "caTools",
+      "Version": "1.18.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f5b3e8f693522708cd9444c839b432e0"
+    },
     "callr": {
       "Package": "callr",
       "Version": "3.5.1",
@@ -123,10 +158,10 @@
     },
     "class": {
       "Package": "class",
-      "Version": "7.3-17",
+      "Version": "7.3-18",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "9267f5dab59a4ef44229858a142bded1"
+      "Hash": "15ef288688a6919417ade6251deea2b3"
     },
     "classInt": {
       "Package": "classInt",
@@ -424,15 +459,16 @@
     },
     "marcR": {
       "Package": "marcR",
-      "Version": "0.3.2",
+      "Version": "0.5.3",
       "Source": "GitHub",
+      "Remotes": "github::yonghah/esri2sf",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteUsername": "MARC-KC",
       "RemoteRepo": "marcR",
-      "RemoteRef": "main",
-      "RemoteSha": "df87e5c510cf36a27656a013c62695a21fdc07f4",
-      "Hash": "b7bf83e80f0d51898843eb426b9ec051"
+      "RemoteUsername": "MARC-KC",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "cc8d58663ae94b60f0fff32c27799e030ac8f4f2",
+      "Hash": "40921c164766a05ecfcd0295c117307e"
     },
     "markdown": {
       "Package": "markdown",
@@ -553,6 +589,13 @@
       "Repository": "CRAN",
       "Hash": "ed95895886dab6d2a584da45503555da"
     },
+    "reactlog": {
+      "Package": "reactlog",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5a30d3b8883107ae07c2137a33c000b2"
+    },
     "rematch2": {
       "Package": "rematch2",
       "Version": "2.1.2",
@@ -580,6 +623,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "093584b944440c5cd07a696b3c8e0e4c"
+    },
+    "rjson": {
+      "Package": "rjson",
+      "Version": "0.2.20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7d597f982ee6263716b6a2f28efd29fa"
     },
     "rlang": {
       "Package": "rlang",
@@ -622,6 +672,27 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "0ec41191f744d0f5afad8c6f35cc36e4"
+    },
+    "rvest": {
+      "Package": "rvest",
+      "Version": "0.3.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a9795ccb2d608330e841998b67156764"
+    },
+    "selectr": {
+      "Package": "selectr",
+      "Version": "0.4-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3838071b66e0c566d55cc26bd6e27bf4"
+    },
+    "semver": {
+      "Package": "semver",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "767de4760297e70995edb7b30fbda816"
     },
     "sessioninfo": {
       "Package": "sessioninfo",
@@ -755,6 +826,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "181d1a31b1ba2009ef20926f2ee0570c"
+    },
+    "wdman": {
+      "Package": "wdman",
+      "Version": "0.2.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "db20e883b0af01049a8973b75b603d30"
     },
     "whisker": {
       "Package": "whisker",
