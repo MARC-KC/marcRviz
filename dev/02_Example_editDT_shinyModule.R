@@ -80,8 +80,9 @@ server <- function(input, output, session) {
 
     #Initialize appValues
     iris_editDT_appValues <- reactiveValues(
+        tableFull = editDT_prepareNewData(dplyr::mutate(iris, Species = paste0(Species, " test test2")), modifyPlaceID = 0),
         # tableFull = editDT_prepareNewData(iris, modifyPlaceID = 0),
-        tableFull = editDT_prepareNewData(purrr::map_dfr(1:500, ~tibble::tibble(iris)), modifyPlaceID = 0), #for testing large datesets
+        # tableFull = editDT_prepareNewData(purrr::map_dfr(1:500, ~tibble::tibble(iris)), modifyPlaceID = 0), #for testing large datesets
         modifyPlaceID = 0
     )
 
@@ -94,7 +95,7 @@ server <- function(input, output, session) {
             inputTableFull = reactive(iris_editDT_appValues[['tableFull']]),
             inputModifyPlaceID = reactive(iris_editDT_appValues[['modifyPlaceID']]),
             colToDisplay = c('Sepal.Length', 'Sepal.Width', 'Species'),
-            colToEdit = c('Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width'),
+            colToEdit = c('Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width', 'Species'),
             colWidth = c("Sepal.Length" = "100px"),
             allowDeletes = TRUE,
             allowEdits = TRUE

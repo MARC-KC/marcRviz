@@ -31,8 +31,7 @@ rowiseEditOnclick = function(id, row, editIndicies, allowDeletes) {
         //Add input fields (could program type here too)
         $.each(trObjs, function(i, el) {
             var txt = $(this).text();
-            //had to add some special escaping here on the R side to escape the single quotes and slashes
-            $(this).html("").append("<input type='text' value="+ txt + ">");
+            $(this).html("").append("<input type='text' value='"+ txt + "'>");
         });
 
     } else {
@@ -68,7 +67,7 @@ rowiseEditOnclick = function(id, row, editIndicies, allowDeletes) {
 getSelectedRecordIDs = function(id, RecordIDname) {
     console.log(id)
     console.log(RecordIDname)
-    //Find the correct column with RecordID 
+    //Find the correct column with RecordID
     var colNames = $('div#' + id + '-dt_editableTable table.dataTable thead th').map(function() {return($(this).text());});
     // var recordIDIndex = colNames.toArray().indexOf("RecordID");
     var recordIDIndex = colNames.toArray().indexOf(RecordIDname);
