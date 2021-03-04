@@ -29,7 +29,6 @@ devtools::document()
 ## Add packages to imports:
 Adds the relevant lines to the package DESCTIPTION file:
 ```{r}
-usethis::use_package('renv')
 usethis::use_package('shiny')
 usethis::use_package('shinyjs')
 usethis::use_package('glue')
