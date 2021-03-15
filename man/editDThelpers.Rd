@@ -4,6 +4,7 @@
 \alias{editDT_currentData}
 \alias{editDT_displayData}
 \alias{editDT_deletedData}
+\alias{editDT_editedData}
 \alias{editDT_prepareNewData}
 \alias{editDT_rebaseModifyPoint}
 \title{editDT Helpers}
@@ -13,6 +14,8 @@ editDT_currentData(fullData, modifyPlaceID)
 editDT_displayData(fullData, modifyPlaceID)
 
 editDT_deletedData(fullData, modifyPlaceID)
+
+editDT_editedData(fullData, modifyPlaceID)
 
 editDT_prepareNewData(
   newData,
@@ -71,6 +74,13 @@ Functions that can be used inside or outside the module to add,
       \item Filters out the current data based on your modifyPlaceID and
       returns only the currently deleted rows.
       \item This is used in the module to determine if there are any deleted
+      rows.
+      \item For use inside and outside the module.}}
+  \item{editDT_editedData}{
+    \itemize{
+      \item Filters out the currently displayed data based on your
+      modifyPlaceID and returns only the currently edited rows.
+      \item This is used in the module to determine if there are any edited
       rows.
       \item For use inside and outside the module.}}
   \item{editDT_prepareNewData}{

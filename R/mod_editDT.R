@@ -719,6 +719,13 @@ editDT_server <- function(id, inputTableFull, inputModifyPlaceID, colToDisplay=N
 #'       \item This is used in the module to determine if there are any deleted
 #'       rows.
 #'       \item For use inside and outside the module.}}
+#'   \item{editDT_editedData}{
+#'     \itemize{
+#'       \item Filters out the currently displayed data based on your
+#'       modifyPlaceID and returns only the currently edited rows.
+#'       \item This is used in the module to determine if there are any edited
+#'       rows.
+#'       \item For use inside and outside the module.}}
 #'   \item{editDT_prepareNewData}{
 #'    \itemize{
 #'       \item Prepares data for input into module
@@ -779,6 +786,12 @@ editDT_deletedData <- function(fullData, modifyPlaceID) {
   return(out)
 }
 
+#' @rdname editDThelpers
+#' @export
+editDT_editedData <- function(fullData, modifyPlaceID) {
+  out <- dplyr::filter(marcRviz::editDT_displayData(fullData, modifyPlaceID), editDT_editState)
+  return(out)
+}
 
 #' @rdname editDThelpers
 #' @export
